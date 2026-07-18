@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EventFlow – Event Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #13131a;
+  --surface2: #1c1c27;
+  --border: #2a2a3a;
+  --accent: #7c5cfc;
+  --accent2: #fc5c7d;
+  --accent3: #5cfcb8;
+  --text: #f0f0f8;
+  --muted: #7a7a9a;
+  --radius: 14px;
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── LAYOUT ── */
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10,10,15,0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 64px;
+}
+.logo {
+  font-family: var(--font-head);
+  font-weight: 800; font-size: 1.35rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+.nav-links { display: flex; gap: 0.5rem; align-items: center; }
+.nav-btn {
+  background: none; border: none; color: var(--muted);
+  font-family: var(--font-body); font-size: 0.9rem;
+  padding: 0.4rem 0.9rem; border-radius: 8px;
+  cursor: pointer; transition: all 0.2s;
+}
+.nav-btn:hover { color: var(--text); background: var(--surface); }
+.nav-btn.active { color: var(--text); background: var(--surface2); }
+.nav-btn.primary {
+  background: var(--accent); color: #fff;
+  font-weight: 500;
+}
+.nav-btn.primary:hover { background: #6a4de8; }
+.nav-tag {
+  font-size: 0.7rem; background: var(--accent3);
+  color: #000; padding: 2px 7px; border-radius: 20px;
+  font-weight: 600; margin-left: 4px;
+}
+
+/* ── PAGES ── */
+.page { display: none; flex: 1; }
+.page.active { display: block; }
+
+/* ── HERO ── */
+.hero {
+  min-height: calc(100vh - 64px);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 4rem 2rem;
+  position: relative; overflow: hidden;
+}
+.hero-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,92,252,0.25) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(252,92,125,0.15) 0%, transparent 60%);
+}
+.hero-grid {
+  position: absolute; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(124,92,252,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,92,252,0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.hero-content { position: relative; z-index: 1; max-width: 700px; }
+.hero-badge {
+  display: inline-block;
+  background: rgba(124,92,252,0.15); border: 1px solid rgba(124,92,252,0.35);
+  color: #b89dff; border-radius: 20px;
+  font-size: 0.78rem; font-weight: 500; letter-spacing: 0.05em;
+  padding: 5px 14px; margin-bottom: 1.5rem;
+  text-transform: uppercase;
+}
+.hero h1 {
+  font-family: var(--font-head); font-size: clamp(2.8rem, 6vw, 4.5rem);
+  font-weight: 800; line-height: 1.07; letter-spacing: -2px;
+  margin-bottom: 1.2rem;
+}
+.hero h1 em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero p { color: var(--muted); font-size: 1.1rem; max-width: 500px; margin: 0 auto 2.2rem; }
+.hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 1.6rem; border-radius: 10px;
+  font-family: var(--font-body); font-size: 0.95rem; font-weight: 500;
+  cursor: pointer; border: none; transition: all 0.2s;
+  text-decoration: none;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #6a4de8; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(124,92,252,0.4); }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-danger { background: rgba(252,92,125,0.15); color: var(--accent2); border: 1px solid rgba(252,92,125,0.3); }
+.btn-danger:hover { background: rgba(252,92,125,0.25); }
+.btn-sm { padding: 0.45rem 1rem; font-size: 0.85rem; }
+.btn-success { background: rgba(92,252,184,0.15); color: var(--accent3); border: 1px solid rgba(92,252,184,0.3); }
+
+/* ── STATS ROW ── */
+.stats-row {
+  display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;
+  margin-top: 3.5rem; position: relative; z-index: 1;
+}
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.2rem 2rem; text-align: center;
+  min-width: 130px;
+}
+.stat-num {
+  font-family: var(--font-head); font-size: 2rem; font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+/* ── SECTION ── */
+.section { padding: 3rem 2rem; max-width: 1200px; margin: 0 auto; }
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 2rem; flex-wrap: gap;
+}
+.section-title {
+  font-family: var(--font-head); font-size: 1.6rem; font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.section-title span { color: var(--accent); }
+
+/* ── EVENTS GRID ── */
+.events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 1.4rem;
+}
+.event-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  transition: all 0.25s; cursor: pointer;
+}
+.event-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(124,92,252,0.2); }
+.event-img {
+  height: 160px; position: relative;
+  display: flex; align-items: flex-end; padding: 1rem;
+}
+.event-category {
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 20px;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+}
+.event-body { padding: 1.2rem; }
+.event-title { font-family: var(--font-head); font-weight: 700; font-size: 1.05rem; margin-bottom: 0.4rem; }
+.event-meta { display: flex; flex-direction: column; gap: 3px; margin-bottom: 1rem; }
+.event-meta span { font-size: 0.82rem; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.event-footer { display: flex; align-items: center; justify-content: space-between; }
+.event-price {
+  font-family: var(--font-head); font-size: 1.1rem; font-weight: 700;
+  color: var(--accent3);
+}
+.event-seats { font-size: 0.78rem; color: var(--muted); }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+}
+.modal-overlay.hidden { display: none; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; width: 100%; max-width: 480px;
+  padding: 2rem; position: relative;
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn { from { opacity:0; transform: scale(0.96) translateY(10px); } to { opacity:1; transform: none; } }
+.modal-close {
+  position: absolute; top: 1rem; right: 1rem;
+  background: var(--surface2); border: none; color: var(--muted);
+  width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+  font-size: 1rem; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.modal-close:hover { color: var(--text); background: var(--border); }
+.modal-title { font-family: var(--font-head); font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; }
+
+/* ── FORM ── */
+.form-group { margin-bottom: 1.1rem; }
+.form-label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
+.form-input {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text);
+  font-family: var(--font-body); font-size: 0.95rem;
+  padding: 0.65rem 0.9rem; outline: none; transition: border-color 0.2s;
+}
+.form-input:focus { border-color: var(--accent); }
+.form-input::placeholder { color: var(--muted); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-error { color: var(--accent2); font-size: 0.82rem; margin-top: 0.5rem; }
+.form-success { color: var(--accent3); font-size: 0.82rem; margin-top: 0.5rem; }
+
+/* ── AUTH ── */
+.auth-page {
+  min-height: calc(100vh - 64px);
+  display: flex; align-items: center; justify-content: center; padding: 2rem;
+}
+.auth-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 400px;
+}
+.auth-title { font-family: var(--font-head); font-size: 1.6rem; font-weight: 800; margin-bottom: 0.4rem; }
+.auth-sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+.auth-divider { text-align: center; color: var(--muted); font-size: 0.85rem; margin: 1rem 0; }
+.auth-switch { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--muted); }
+.auth-switch a { color: var(--accent); cursor: pointer; text-decoration: none; }
+.auth-switch a:hover { text-decoration: underline; }
+
+/* ── ADMIN ── */
+.admin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.2rem; margin-bottom: 2.5rem; }
+.admin-stat {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.4rem;
+}
+.admin-stat-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+.admin-stat-num { font-family: var(--font-head); font-size: 2rem; font-weight: 800; }
+.admin-stat-label { font-size: 0.8rem; color: var(--muted); }
+
+.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; }
+thead { background: var(--surface2); }
+th { padding: 0.8rem 1rem; text-align: left; font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+td { padding: 0.85rem 1rem; border-top: 1px solid var(--border); font-size: 0.88rem; }
+tr:hover td { background: var(--surface2); }
+
+.badge {
+  display: inline-block; padding: 2px 10px; border-radius: 20px;
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em;
+}
+.badge-green { background: rgba(92,252,184,0.15); color: var(--accent3); }
+.badge-yellow { background: rgba(252,200,92,0.15); color: #fcc85c; }
+.badge-red { background: rgba(252,92,125,0.15); color: var(--accent2); }
+
+.tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+.tab {
+  padding: 0.6rem 1.2rem; background: none; border: none; color: var(--muted);
+  font-family: var(--font-body); font-size: 0.9rem; cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── MY TICKETS ── */
+.ticket-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.3rem;
+  display: flex; align-items: center; gap: 1.2rem;
+  transition: border-color 0.2s;
+}
+.ticket-card:hover { border-color: var(--border); }
+.ticket-dot {
+  width: 48px; height: 48px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; flex-shrink: 0;
+}
+.ticket-info { flex: 1; }
+.ticket-event { font-family: var(--font-head); font-weight: 700; margin-bottom: 2px; }
+.ticket-meta { font-size: 0.82rem; color: var(--muted); }
+.tickets-list { display: flex; flex-direction: column; gap: 0.9rem; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 2rem; right: 2rem; z-index: 999;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 0.9rem 1.4rem;
+  font-size: 0.9rem; display: flex; align-items: center; gap: 0.6rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  transform: translateY(100px); opacity: 0;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.toast.show { transform: none; opacity: 1; }
+.toast.success { border-color: rgba(92,252,184,0.4); }
+.toast.error { border-color: rgba(252,92,125,0.4); }
+
+/* ── EMPTY ── */
+.empty { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+.empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+.empty-text { font-size: 1rem; }
+
+/* ── BOOKING MODAL SPECIFICS ── */
+.book-summary {
+  background: var(--surface2); border-radius: 10px; padding: 1rem;
+  margin-bottom: 1.2rem;
+}
+.book-row { display: flex; justify-content: space-between; font-size: 0.88rem; padding: 3px 0; }
+.book-row.total { font-weight: 600; border-top: 1px solid var(--border); margin-top: 6px; padding-top: 8px; color: var(--accent3); }
+
+/* ── AXIOS MOCK ── */
+#api-note {
+  position: fixed; bottom: 1rem; left: 1rem;
+  background: rgba(124,92,252,0.15); border: 1px solid rgba(124,92,252,0.3);
+  color: #b89dff; border-radius: 10px; padding: 0.6rem 1rem;
+  font-size: 0.78rem; max-width: 280px; z-index: 50;
+}
+
+@media (max-width: 640px) {
+  .hero h1 { font-size: 2.2rem; }
+  .form-row { grid-template-columns: 1fr; }
+  .section { padding: 2rem 1rem; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="logo">EventFlow</div>
+  <div class="nav-links" id="navLinks">
+    <button class="nav-btn active" onclick="showPage('home')">Home</button>
+    <button class="nav-btn" onclick="showPage('events')">Events</button>
+    <button class="nav-btn" id="navTickets" style="display:none" onclick="showPage('mytickets')">My Tickets</button>
+    <button class="nav-btn" id="navAdmin" style="display:none" onclick="showPage('admin')">Admin <span class="nav-tag">●</span></button>
+    <button class="nav-btn" id="navAuth" onclick="showPage('login')">Login</button>
+    <button class="nav-btn primary" id="navLogout" style="display:none" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<!-- ── HOME PAGE ── -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <div class="hero-badge">✦ Event Management Platform</div>
+      <h1>Where <em>great events</em><br/>come to life</h1>
+      <p>Discover, book, and manage events seamlessly. Powered by Spring Boot &amp; React.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" onclick="showPage('events')">Browse Events →</button>
+        <button class="btn btn-secondary" onclick="showPage('register')">Get Started Free</button>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="statEvents">0</div><div class="stat-label">Events Live</div></div>
+      <div class="stat-card"><div class="stat-num" id="statUsers">0</div><div class="stat-label">Registered Users</div></div>
+      <div class="stat-card"><div class="stat-num" id="statTickets">0</div><div class="stat-label">Tickets Booked</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── EVENTS PAGE ── -->
+<div class="page" id="page-events">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Upcoming <span>Events</span></div>
+      <button class="btn btn-primary btn-sm" id="createEventBtn" style="display:none" onclick="openCreateEvent()">+ Create Event</button>
+    </div>
+    <div class="events-grid" id="eventsGrid">
+      <div class="empty"><div class="empty-icon">🎭</div><div class="empty-text">Loading events…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MY TICKETS PAGE ── -->
+<div class="page" id="page-mytickets">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">My <span>Tickets</span></div>
+    </div>
+    <div class="tickets-list" id="ticketsList">
+      <div class="empty"><div class="empty-icon">🎟️</div><div class="empty-text">No tickets yet.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADMIN PAGE ── -->
+<div class="page" id="page-admin">
+  <div class="section">
+    <div class="section-title" style="margin-bottom:1.5rem">Admin <span>Dashboard</span></div>
+    <div class="admin-grid">
+      <div class="admin-stat">
+        <div class="admin-stat-icon">🎭</div>
+        <div class="admin-stat-num" id="aStatEvents">—</div>
+        <div class="admin-stat-label">Total Events</div>
+      </div>
+      <div class="admin-stat">
+        <div class="admin-stat-icon">👥</div>
+        <div class="admin-stat-num" id="aStatUsers">—</div>
+        <div class="admin-stat-label">Registered Users</div>
+      </div>
+      <div class="admin-stat">
+        <div class="admin-stat-icon">🎟️</div>
+        <div class="admin-stat-num" id="aStatTickets">—</div>
+        <div class="admin-stat-label">Total Tickets</div>
+      </div>
+      <div class="admin-stat">
+        <div class="admin-stat-icon">💰</div>
+        <div class="admin-stat-num" id="aStatRevenue">—</div>
+        <div class="admin-stat-label">Est. Revenue</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="adminTab('bookings', this)">All Bookings</button>
+      <button class="tab" onclick="adminTab('events', this)">Manage Events</button>
+    </div>
+
+    <div id="adminTabBookings">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>User</th><th>Event</th><th>Qty</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody id="bookingsTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="adminTabEvents" style="display:none">
+      <div style="margin-bottom:1rem">
+        <button class="btn btn-primary btn-sm" onclick="openCreateEvent()">+ Create New Event</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Title</th><th>Date</th><th>Location</th><th>Price</th><th>Capacity</th><th>Actions</th></tr></thead>
+          <tbody id="eventsTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── LOGIN PAGE ── -->
+<div class="page" id="page-login">
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-title">Welcome back</div>
+      <div class="auth-sub">Sign in to your EventFlow account</div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input id="loginEmail" class="form-input" type="email" placeholder="you@example.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input id="loginPassword" class="form-input" type="password" placeholder="••••••••"/>
+      </div>
+      <div id="loginError" class="form-error"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem" onclick="login()">Sign In →</button>
+      <div class="auth-switch">Don't have an account? <a onclick="showPage('register')">Register</a></div>
+      <div class="auth-divider">— Demo credentials —</div>
+      <div style="display:flex;gap:0.5rem;font-size:0.8rem;justify-content:center">
+       
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── REGISTER PAGE ── -->
+<div class="page" id="page-register">
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-title">Create account</div>
+      <div class="auth-sub">Join EventFlow today — it's free</div>
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input id="regName" class="form-input" type="text" placeholder="Your Name"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input id="regEmail" class="form-input" type="email" placeholder="you@example.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input id="regPassword" class="form-input" type="password" placeholder="Min. 8 characters"/>
+      </div>
+      <div id="regError" class="form-error"></div>
+      <div id="regSuccess" class="form-success"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem" onclick="register()">Create Account →</button>
+      <div class="auth-switch">Already have an account? <a onclick="showPage('login')">Sign In</a></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- .app -->
+
+<!-- ── BOOKING MODAL ── -->
+<div class="modal-overlay hidden" id="bookingModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('bookingModal')">✕</button>
+    <div class="modal-title" id="bookingTitle">Book Tickets</div>
+    <div class="book-summary" id="bookingSummary"></div>
+    <div class="form-group">
+      <label class="form-label">Number of Tickets</label>
+      <input id="bookQty" class="form-input" type="number" min="1" max="10" value="1" oninput="updateBookTotal()"/>
+    </div>
+    <div id="bookTotal" style="font-size:0.88rem;color:var(--muted);margin-bottom:1.2rem"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="confirmBooking()">Confirm Booking →</button>
+  </div>
+</div>
+
+<!-- ── CREATE EVENT MODAL ── -->
+<div class="modal-overlay hidden" id="createEventModal">
+  <div class="modal" style="max-width:560px">
+    <button class="modal-close" onclick="closeModal('createEventModal')">✕</button>
+    <div class="modal-title">Create New Event</div>
+    <div class="form-group">
+      <label class="form-label">Event Title</label>
+      <input id="evTitle" class="form-input" type="text" placeholder="e.g. React Summit 2025"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <input id="evDesc" class="form-input" type="text" placeholder="Short description"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Date & Time</label>
+        <input id="evDate" class="form-input" type="datetime-local"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Location</label>
+        <input id="evLocation" class="form-input" type="text" placeholder="City or Venue"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Price (₹)</label>
+        <input id="evPrice" class="form-input" type="number" placeholder="0 for free"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Capacity</label>
+        <input id="evCapacity" class="form-input" type="number" placeholder="100"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <select id="evCategory" class="form-input">
+        <option>Technology</option><option>Music</option><option>Art</option>
+        <option>Business</option><option>Sports</option><option>Food</option>
+      </select>
+    </div>
+    <div id="createEvError" class="form-error"></div>
+<button class="btn btn-primary"
+        style="width:100%;justify-content:center;margin-top:0.5rem"
+        onclick="createNewEvent()">
+    Create Event →
+</button>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast">
+  <span id="toastIcon">✓</span>
+  <span id="toastMsg"></span>
+</div>
+
+<!-- ── API NOTE ── -->
+<div id="api-note">
+  🔌 <strong>Connect to Spring Boot:</strong><br/>
+  Change <code>API_BASE</code> to your server URL and wire Axios calls.
+</div>
+
+<script>
+  let eventsList = [];
+// ── CONFIG ── 
+// Change this to your Spring Boot server URL
+const API_BASE = 'http://localhost:8080';
+
+// ── STATE ──
+let currentUser = null;
+const savedUser =
+  localStorage.getItem('currentUser');
+
+if (savedUser) {
+  currentUser = JSON.parse(savedUser);
+}
+if (currentUser) {
+    updateNav();
+}
+
+let token = null;
+let selectedEvent = null;
+let mockEvents = [];
+let mockTickets = [];
+let mockBookings = [];
+
+// ── AXIOS-STYLE API (replace with real calls) ──
+const api = {
+  async post(path, body) {
+    // REAL: return axios.post(API_BASE + path, body, { headers: { Authorization: `Bearer ${token}` } });
+    await delay(400);
+    if (path === '/auth/login') {
+
+    const response = await fetch(
+        "http://localhost:8080/user/login",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+        }
+    );
+
+    const data = await response.json();
+
+    return { data };
+    if (path === '/events/all') {
+
+    const response =
+      await fetch("http://localhost:8080/events/all");
+
+    return {
+      data: await response.json()
+    };
+}
+
+if (path === '/booking/all') {
+
+    const response =
+      await fetch("http://localhost:8080/booking/all");
+
+    return {
+      data: await response.json()
+    };
+}
+}
+    if (path === '/auth/register') {
+
+    const response = await fetch(
+        "http://localhost:8080/user/register",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+        }
+    );
+
+    const data = await response.json();
+
+    return { data };
+}
+    if (path === '/booking/add') {
+
+    const response = await fetch(
+        "http://localhost:8080/booking/add",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+        }
+    );
+
+    const data = await response.json();
+
+    return { data };
+}
+    if (path === '/events') {
+
+    const response = await fetch(
+        "http://localhost:8080/events/add",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+        }
+    );
+
+    const data = await response.json();
+
+    return { data };
+
+}
+    throw new Error('Unknown endpoint');
+  },
+  async get(path) {
+    // REAL: return axios.get(API_BASE + path, { headers: { Authorization: `Bearer ${token}` } });
+    await delay(300);
+if (path === '/events') {
+
+    const response =
+        await fetch("http://localhost:8080/events/all");
+
+    const data = await response.json();
+
+    return { data };
+}
+if (path === '/booking/all') {
+
+    const response =
+        await fetch("http://localhost:8080/booking/all");
+
+    const data = await response.json();
+
+    return { data };
+}
+if (path.startsWith('/booking/user/')) {
+
+    const response = await fetch(
+        "http://localhost:8080" + path
+    );
+
+    const data = await response.json();
+
+    return { data };
+}
+if (path === '/tickets/my') {
+    return {
+        data: mockTickets.filter(
+            t => t.userEmail === currentUser.email
+        )
+    };
+}
+    if (path === '/admin/stats') return { data: { totalEvents: mockEvents.length, totalUsers: 842, totalTickets: mockBookings.length + 503 } };
+    if (path === '/admin/bookings') return { data: mockBookings };
+    throw new Error('Unknown endpoint');
+  },
+  async delete(path) {
+    await delay(300);
+    const id = parseInt(path.split('/').pop());
+    mockEvents = mockEvents.filter(e => e.id !== id);
+    return { data: {} };
+  }
+};
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── MOCK HANDLERS ──
+function mockLogin({ email, password }) {
+  if (email === 'admin@demo.com' && password === 'admin123') {
+    return { data: { token: 'mock-admin-jwt', user: { id:1, name:'Admin User', email, role:'ADMIN' } } };
+  }
+  if (email === 'user@demo.com' && password === 'user123') {
+    return { data: { token: 'mock-user-jwt', user: { id:2, name:'Priya Sharma', email, role:'USER' } } };
+  }
+  throw new Error('Invalid credentials');
+}
+function mockRegister({ name, email, password }) {
+  if (!name || !email || !password) throw new Error('All fields required');
+  return { data: { token: 'mock-new-jwt', user: { id:99, name, email, role:'USER' } } };
+}
+function mockBook({ eventId, quantity }) {
+
+  const ev = eventsList.find(e => e.id === eventId);
+
+  if (!ev) throw new Error('Event not found');
+
+  const ticket = {
+    id: mockTickets.length + 1,
+    userEmail: currentUser.email,
+    event: ev,
+    quantity,
+    bookedAt: new Date().toISOString(),
+    paid: true
+  };
+
+  mockTickets.push(ticket);
+
+  return { data: ticket };
+}
+function mockCreateEvent(body) {
+  const ev = { ...body, id: mockEvents.length+1, booked: 0, capacity: parseInt(body.capacity), price: parseFloat(body.price) };
+  mockEvents.push(ev);
+  return { data: ev };
+}
+
+// ── PAGE ROUTING ──
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-btn[onclick]').forEach(b => b.classList.remove('active'));
+  if (name === 'events') { loadEvents(); }
+  if (name === 'mytickets') { loadMyTickets(); }
+  if (name === 'admin') { loadAdmin(); }
+  if (name === 'home') { animateStats(); }
+}
+
+// ── AUTH ──
+
+
+async function login() {
+
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+
+  document.getElementById('loginError').textContent = '';
+
+  try {
+
+    const res = await api.post('/auth/login', {
+      email,
+      password
+    });
+
+    currentUser = res.data;
+
+    // SAVE USER AFTER LOGIN
+    localStorage.setItem(
+      'currentUser',
+      JSON.stringify(currentUser)
+    );
+
+    updateNav();
+
+    showPage('events');
+
+    showToast(
+      'Welcome back, ' + currentUser.name + '!',
+      'success'
+    );
+
+  } catch(e) {
+    document.getElementById('loginError').textContent = e.message;
+  }
+}
+async function register() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+
+  document.getElementById('regError').textContent = '';
+  document.getElementById('regSuccess').textContent = '';
+
+  try {
+    const res = await api.post('/auth/register', { name, email, password });
+
+    currentUser = res.data;
+
+    document.getElementById('regSuccess').textContent =
+      'Account created! Redirecting...';
+
+    setTimeout(() => {
+      updateNav();
+      showPage('events');
+    }, 800);
+
+  } catch(e) {
+    document.getElementById('regError').textContent = e.message;
+  }
+}
+
+function logout() {
+
+  currentUser = null;
+
+  localStorage.removeItem('currentUser');
+
+  updateNav();
+
+  showPage('home');
+}
+
+function updateNav() {
+
+    const loggedIn = !!currentUser;
+
+    document.getElementById('navAuth').style.display =
+        loggedIn ? 'none' : '';
+
+    document.getElementById('navLogout').style.display =
+        loggedIn ? '' : 'none';
+
+    document.getElementById('navTickets').style.display =
+        loggedIn ? '' : 'none';
+
+    const isAdmin =
+        loggedIn &&
+        currentUser.role === 'ADMIN';
+
+    document.getElementById('navAdmin').style.display =
+        isAdmin ? '' : 'none';
+
+    if (document.getElementById('createEventBtn')) {
+        document.getElementById('createEventBtn').style.display =
+            isAdmin ? '' : 'none';
+    }
+}
+
+// ── EVENTS ──
+const COLORS = ['#7c5cfc','#fc5c7d','#5cfcb8','#fcb85c','#5cb8fc','#d45cfc'];
+const EMOJIS = { Technology:'💻', Music:'🎵', Art:'🎨', Business:'🤝', Sports:'⚽', Food:'🍜' };
+
+async function loadEvents() {
+  const grid = document.getElementById('eventsGrid');
+
+  grid.innerHTML =
+    '<div class="empty"><div class="empty-icon">⏳</div><div class="empty-text">Loading…</div></div>';
+
+  try {
+
+    const res = await api.get('/events');
+
+    eventsList = res.data;
+
+    // UPDATE HOME PAGE EVENT COUNT
+    const statEvents = document.getElementById('statEvents');
+    if (statEvents) {
+      statEvents.textContent = eventsList.length;
+    }
+
+    renderEvents(eventsList);
+
+    if (currentUser?.role === 'ADMIN') {
+      document.getElementById('createEventBtn').style.display = '';
+    }
+
+  } catch(e) {
+    grid.innerHTML =
+      '<div class="empty"><div>Failed to load events.</div></div>';
+  }
+}
+
+function renderEvents(events) {
+  const grid = document.getElementById('eventsGrid');
+  if (!events.length) { grid.innerHTML = '<div class="empty"><div class="empty-icon">🎭</div><div class="empty-text">No events yet.</div></div>'; return; }
+  grid.innerHTML = events.map((ev, i) => {
+    const color = COLORS[i % COLORS.length];
+    const seats = ev.capacity;
+    const dateStr = new Date(ev.date).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+    const timeStr = new Date(ev.date).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+    return `
+    <div class="event-card" onclick="openBooking(${ev.id})">
+      <div class="event-img" style="background:linear-gradient(135deg,${color}22,${color}44)">
+        <span style="font-size:3rem;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.4">${EMOJIS[ev.category]||'🎭'}</span>
+        <span class="event-category" style="color:${color}">${ev.category}</span>
+      </div>
+      <div class="event-body">
+        <div class="event-title">${ev.eventName}</div>
+        <div class="event-meta">
+          <span>📅 ${dateStr} · ${timeStr}</span>
+          <span>📍 ${ev.location}</span>
+        </div>
+        <div class="event-footer">
+          <div class="event-price">${ev.price === 0 ? 'FREE' : '₹' + ev.price.toLocaleString()}</div>
+          <div class="event-seats">${seats} seats left</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── BOOKING ──
+function openBooking(id) {
+  if (!currentUser) { showPage('login'); showToast('Please login to book tickets', 'error'); return; }
+  selectedEvent = eventsList.find(e => e.id === id);
+  if (!selectedEvent) return;
+  document.getElementById('bookingTitle').textContent = selectedEvent.title;
+  document.getElementById('bookQty').value = 1;
+  updateBookTotal();
+  const dateStr = new Date(selectedEvent.date).toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  document.getElementById('bookingSummary').innerHTML = `
+    <div class="book-row"><span>📅 Date</span><span>${dateStr}</span></div>
+    <div class="book-row"><span>📍 Venue</span><span>${selectedEvent.location}</span></div>
+    <div class="book-row"><span>🎟️ Available</span><span>${selectedEvent.capacity - selectedEvent.booked} seats</span></div>
+    <div class="book-row"><span>💰 Per Ticket</span><span>${selectedEvent.price === 0 ? 'FREE' : '₹'+selectedEvent.price}</span></div>`;
+  document.getElementById('bookingModal').classList.remove('hidden');
+}
+function updateBookTotal() {
+  const qty = parseInt(document.getElementById('bookQty').value)||1;
+  if (!selectedEvent) return;
+  const total = selectedEvent.price * qty;
+  document.getElementById('bookTotal').textContent = total === 0 ? `${qty} free ticket(s)` : `Total: ₹${total.toLocaleString()} for ${qty} ticket(s)`;
+}
+async function confirmBooking() {
+  const qty = parseInt(document.getElementById('bookQty').value)||1;
+  try {
+    await api.post('/booking/add', {
+    userId: currentUser.id,
+    eventId: selectedEvent.id,
+    quantity: qty
+});
+mockTickets.push({
+    userEmail: currentUser.email,
+    quantity: qty,
+    event: selectedEvent
+});
+    closeModal('bookingModal');
+    showToast(`${qty} ticket(s) booked for "${selectedEvent.eventName}"!`, 'success');
+    loadEvents();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── MY TICKETS ──
+async function loadMyTickets() {
+
+  const list = document.getElementById('ticketsList');
+
+  list.innerHTML = '<div class="empty"><div>Loading...</div></div>';
+
+  try {
+
+    const bookingResponse =
+      await fetch(`http://localhost:8080/booking/user/${currentUser.id}`);
+
+    const bookings = await bookingResponse.json();
+
+    if (!bookings.length) {
+      list.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">🎟️</div>
+          <div class="empty-text">No tickets booked yet.</div>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+
+    for (let i = 0; i < bookings.length; i++) {
+
+      const booking = bookings[i];
+
+      const eventResponse =
+        await fetch(`http://localhost:8080/events/${booking.eventId}`);
+
+      const event = await eventResponse.json();
+
+      const color = COLORS[i % COLORS.length];
+
+      const dateStr = new Date(event.date)
+        .toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short'
+        });
+
+      html += `
+        <div class="ticket-card">
+
+          <div class="ticket-dot" style="background:${color}22">
+            ${EMOJIS[event.category] || '🎫'}
+          </div>
+
+          <div class="ticket-info">
+
+            <div class="ticket-event">
+              ${event.eventName}
+            </div>
+
+            <div class="ticket-meta">
+              ${dateStr} · ${event.location} · ${booking.quantity} ticket(s)
+            </div>
+
+          </div>
+
+          <span class="badge badge-green">
+            Confirmed
+          </span>
+
+        </div>
+      `;
+    }
+
+    list.innerHTML = html;
+
+  } catch (err) {
+
+    console.error(err);
+
+    list.innerHTML = `
+      <div class="empty">
+        <div class="empty-text">
+          Failed to load tickets
+        </div>
+      </div>
+    `;
+  }
+}
+
+// ── ADMIN ──
+async function loadAdmin() {
+
+  try {
+
+    // Get bookings
+    const bRes = await api.get('/booking/all');
+    const bookings = bRes.data;
+
+    // Get events
+    const eRes = await api.get('/events');
+    const events = eRes.data;
+
+    // Stats
+    document.getElementById('aStatEvents').textContent =
+      events.length;
+
+    document.getElementById('aStatTickets').textContent =
+      bookings.length;
+
+    const userRes = await fetch("http://localhost:8080/user/all");
+const users = await userRes.json();
+
+document.getElementById('aStatUsers').textContent =
+    users.length;
+
+    // Revenue
+    let revenue = 0;
+
+    for (const booking of bookings) {
+
+      const event =
+        events.find(e => e.id === booking.eventId);
+
+      if (event) {
+        revenue += event.price * booking.quantity;
+      }
+    }
+
+    document.getElementById('aStatRevenue').textContent =
+      '₹' + revenue.toLocaleString();
+
+    // Tables
+    renderEventsTable(events);
+
+    await renderBookingsTable(bookings);
+
+  } catch (err) {
+
+    console.error("Admin Error:", err);
+
+  }
+}
+
+function adminTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('adminTabBookings').style.display = name === 'bookings' ? '' : 'none';
+  document.getElementById('adminTabEvents').style.display = name === 'events' ? '' : 'none';
+}
+
+async function renderBookingsTable(bookings) {
+
+  const tbody =
+    document.getElementById('bookingsTable');
+
+  if (!bookings.length) {
+
+    tbody.innerHTML =
+      `<tr>
+         <td colspan="7"
+             style="text-align:center;
+                    color:var(--muted);
+                    padding:2rem">
+           No bookings yet
+         </td>
+       </tr>`;
+
+    return;
+  }
+
+  let html = '';
+
+  for (const b of bookings) {
+
+    const eventRes =
+      await fetch(
+        `http://localhost:8080/events/${b.eventId}`
+      );
+
+    const event =
+      await eventRes.json();
+
+    html += `
+      <tr>
+
+        <td>#${b.id}</td>
+
+        <td>User ${b.userId}</td>
+
+        <td>${event.eventName}</td>
+
+        <td>${b.quantity}</td>
+
+        <td style="color:var(--accent3)">
+          ₹${event.price * b.quantity}
+        </td>
+
+        <td>
+          <span class="badge badge-green">
+            Confirmed
+          </span>
+        </td>
+
+        <td>
+          ${new Date(event.date)
+            .toLocaleDateString('en-IN')}
+        </td>
+
+      </tr>
+    `;
+  }
+
+  tbody.innerHTML = html;
+}
+
+function renderEventsTable(events) {
+  const tbody = document.getElementById('eventsTable');
+  tbody.innerHTML = events.map(ev => `
+    <tr>
+      <td style="color:var(--muted)">#${ev.id}</td>
+      <td style="font-weight:500">${ev.eventName}</td>
+      <td>${new Date(ev.date).toLocaleDateString('en-IN')}</td>
+      <td>${ev.location}</td>
+      <td style="color:var(--accent3)">${ev.price === 0 ? 'FREE' : '₹'+ev.price}</td>
+            <td>${ev.capacity}</td>
+
+      <td><button class="btn btn-danger btn-sm" onclick="deleteEvent(${ev.id})">Delete</button></td>
+    </tr>`).join('');
+}
+
+async function deleteEvent(id) {
+  if (!confirm('Delete this event?')) return;
+  await api.delete('/events/' + id);
+  showToast('Event deleted', 'success');
+  loadAdmin();
+}
+
+// ── CREATE EVENT ──
+function openCreateEvent() {
+  document.getElementById('createEvError').textContent = '';
+  document.getElementById('createEventModal').classList.remove('hidden');
+}
+async function createNewEvent() {
+  
+    const body = {
+    eventName: document.getElementById('evTitle').value.trim(),
+    description: document.getElementById('evDesc').value.trim(),
+    location: document.getElementById('evLocation').value.trim(),
+    date: document.getElementById('evDate').value,
+    price: parseFloat(document.getElementById('evPrice').value),
+    capacity: document.getElementById('evCapacity').value,
+     category: document.getElementById('evCategory').value
+};
+  
+ if (!body.eventName || !body.date || !body.location) {
+    document.getElementById('createEvError').textContent = 'Title, date and location are required.'; return;
+  }
+  await api.post('/events', body);
+  closeModal('createEventModal');
+  showToast('Event created!', 'success');
+  loadEvents(); if (document.getElementById('page-admin').classList.contains('active')) loadAdmin();
+}
+
+// ── MODALS ──
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); }));
+
+// ── TOAST ──
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toastIcon').textContent = type === 'success' ? '✓' : '✕';
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── STATS ANIMATION ──
+async function animateStats() {
+
+  const response =
+    await fetch("http://localhost:8080/events/all");
+
+  const events =
+    await response.json();
+
+  document.getElementById('statEvents').textContent =
+    events.length;
+
+  animNum('statUsers', 0, 842, 1000);
+  animNum('statTickets', 0, 503, 900);
+}
+function animNum(id, from, to, dur) {
+  const el = document.getElementById(id);
+  const start = performance.now();
+  function step(now) {
+    const p = Math.min((now - start) / dur, 1);
+    const ease = 1 - Math.pow(1-p, 3);
+    el.textContent = Math.round(from + (to - from) * ease);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+// In your event-management-frontend.html
+
+
+// ── INIT ──
+animateStats();
+</script>
+</body>
+</html>
